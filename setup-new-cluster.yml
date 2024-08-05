@@ -1,0 +1,70 @@
+---
+- name: Set up a new Kubernetes Cluster
+  hosts: all
+  become: true
+  vars_files:
+    - default.config.yml
+  tasks:
+    
+    - name: Update package list
+      ansible.builtin.apt:
+        update_cache: yes
+      become: true
+
+    - name: Install Uncomplicated Firewall
+      ansible.builtin.apt:
+        name: ufw
+        state: present
+      become: true
+
+
+    - name: Allow k8s_common_ports through UFW
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+        state: enabled
+      become: true
+      with_items: "{{ k8s_common_ports }}"
+
+    - name: Allow k8s_control_ports through UFW
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+        state: enabled
+      become: true
+      when: "'control_nodes' in group_names"
+      with_items:
+      - "{{ k8s_control_ports }}"
+
+    - name: Allow k8s_worker_ports through UFW
+      community.general.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+        state: enabled
+      become: true
+      when: "'worker_nodes' in group_names"
+      with_items:
+      - "{{ k8s_worker_ports }}"
+
+    - name: Allow ICMP Echo Request (ping)
+      ansible.builtin.iptables:
+        chain: INPUT
+        protocol: icmp
+        icmp_type: echo-request
+        jump: ACCEPT
+
+
+    - name: Allow ICMP Echo Reply
+      ansible.builtin.iptables:
+        chain: INPUT
+        protocol: icmp
+        icmp_type: echo-reply
+        jump: ACCEPT
+
+    - name: Enable UFW
+      community.general.ufw:
+        state: enabled
+      become: true

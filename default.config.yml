@@ -1,0 +1,17 @@
+---
+k8s_common_ports:
+  - "22"    # ssh
+  - "80"    # http
+  - "443"   # https
+
+
+k8s_control_ports:
+  - "6443"  # kube-apiserver
+  - "10251" # kube-scheduler
+  - "10252" # kube-controller-manager
+  - "2379:2380" # etcd
+
+k8s_worker_ports:
+  - "10250"  # kubelet
+  - "10256"  # kube-proxy
+  - "30000:32767" # NodePort Service
